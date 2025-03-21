@@ -1,0 +1,72 @@
+what are signals !?
+
+signals are a waye to cominicate between processe 
+signals tell a processe to do somthing 
+signals can happen in any time ( interrupt )
+
+=========================================================================
+
+how signals work in linux ?
+
+you can send signals from terminal / another process / keyboard
+terminal : 
+kill -SIGUSR1 <PID>  # Sends SIGUSR1 to a process
+kill -SIGUSR2 <PID>  # Sends SIGUSR2 to a process
+
+another process :
+kill(pid, SIGUSR1);  // Sends SIGUSR1 to process with ID `pid`
+kill(pid, SIGUSR2);  // Sends SIGUSR2 to process with ID `pid`
+
+keyboard :
+ctrl + c => send SIGINT
+ctrl + z => send SIGTSTP
+
+=========================================================================
+
+how are signals handled ?
+
+When a signal arrives, the process stops what it's doing and executes a signal handler.
+
+We register a signal handler using:
+struct sigaction s_info;
+s_info.sa_sigaction = signal_handler;
+s_info.sa_flags = SA_SIGINFO;
+sigaction(SIGUSR1, &s_info, 0);
+sigaction(SIGUSR2, &s_info, 0);
+
+When a signal is received, the function signal_handler() is immediately executed.
+📌 In Minitalk, the server waits for signals and reconstructs characters bit by bit.
+
+=========================================================================
+
+how we use signals in minitalk ?
+
+Converts each character to binary.
+Sends SIGUSR1 for 0 and SIGUSR2 for 1
+Uses kill(server_pid, signal) to send each bit.
+
+void send_char(char c, pid_t server_pid)
+{
+    short mask = 128; // 10000000 in binary (MSB first)
+    while (mask)
+    {
+        if (c & mask)
+            kill(server_pid, SIGUSR2);
+        else
+            kill(server_pid, SIGUSR1);
+        mask >>= 1;
+        usleep(200);
+        usleep(200);
+    }
+}
+
+✅ Why usleep(200);?
+
+To prevent losing signals (gives time for the server to process each signal).
+
+✅ The Server (server.c): Receives and Processes Signals
+Uses sigaction() to catch SIGUSR1 and SIGUSR2.
+Reconstructs characters bit by bit.
+Prints the character once 8 bits are received.
+
+
