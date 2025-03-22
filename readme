@@ -37,6 +37,8 @@ sigaction(SIGUSR2, &s_info, 0);
 When a signal is received, the function signal_handler() is immediately executed.
 📌 In Minitalk, the server waits for signals and reconstructs characters bit by bit.
 
+✔ By default, SIGUSR1 & SIGUSR2 terminate the process (if unhandled).
+
 =========================================================================
 
 how we use signals in minitalk ?
